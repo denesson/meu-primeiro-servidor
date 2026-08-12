@@ -1,10 +1,9 @@
 const express = require('express')
 const app = express()
 app.use(express.json())
-let eventos = [
-  { id: 1, nome: "Festa na praia" },
-  { id: 2, nome: "Show de rock" }
-]
+const Database = require("better-sqlite3")
+const db = new Database("meubanco.db")
+
 
 app.get('/', (req, res) =>{
     res.send('Meu servidor está rodando')
@@ -21,32 +20,38 @@ app.post('/login', (req, res) =>{
 })
 
 app.get('/eventos', (req, res)=>{
+    const buscarTodos = db.prepare("SELECT * FROM eventos")
+    const eventos = buscarTodos.all()
     res.json(eventos)
 })
 
 app.post('/eventos', (req, res) =>{
     const { nome } = req.body
-    const novoEvento = {id: eventos.length + 1, nome: nome}
-    eventos.push(novoEvento)
-    res.json(eventos)
+    const inserir = db.prepare("INSERT INTO eventos (nome) VALUES (?)")
+    inserir.run(nome)
+
+    const buscarTodos = db.prepare("SELECT * FROM eventos")
+    res.json(buscarTodos.all())
 })
 
 app.put('/eventos/:id', (req, res) =>{
     const id = Number(req.params.id)
     const { nome } = req.body
-    for(let i = 0; i < eventos.length; i++){
-        if(eventos[i].id === id){
-            eventos[i].nome = nome
-        }
-    }
-    res.json(eventos)
+    const atualizar = db.prepare("UPDATE eventos SET nome = ? WHERE id = ?")
+    atualizar.run(nome, id)
+
+    const buscarTodos =  db.prepare("SELECT * FROM eventos")
+    res.json(buscarTodos.all())
 })
 
 app.delete('/eventos/:id', (req, res) =>{
     const id = Number(req.params.id)
-    eventos = eventos.filter( eventos => eventos.id !== id)
+    const apagar = db.prepare("DELETE FROM eventos WHERE id = ?")
+    apagar.run(id)
 
-    res.json(eventos)
+    const buscarTodos =  db.prepare("SELECT * FROM eventos")
+    res.json(buscarTodos.all())
+    
 })
 
 app.listen(3000, () =>{
