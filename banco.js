@@ -2,6 +2,15 @@ const Database = require('better-sqlite3')
 const db = new Database('meubanco.db')
 
 db.exec(`
+        CREATE TABLE IF NOT EXISTS usuarios(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL UNIQUE,
+        senha TEXT NOT NULL
+        )
+    `)
+console.log("Tabela criada!")
+
+db.exec(`
         CREATE TABLE IF NOT EXISTS eventos(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL
@@ -48,7 +57,7 @@ const consulta = db.prepare(
     `SELECT participantes.nome, eventos.nome AS evento
     FROM participantes
     JOIN eventos ON participantes.evento_id = eventos.id
-    `
+    `   
 )
 
 const consultaReviews = db.prepare(
@@ -60,6 +69,9 @@ const consultaReviews = db.prepare(
 
 console.log(consulta.all())
 console.log(consultaReviews.all())
+
+const buscarUsuarios = db.prepare('SELECT * FROM usuarios')
+console.log(buscarUsuarios.all())
 
 const buscarTodos = db.prepare("SELECT * FROM eventos")
 const eventos =  buscarTodos.all()

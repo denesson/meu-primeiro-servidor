@@ -3,7 +3,7 @@ const app = express()
 app.use(express.json())
 const Database = require("better-sqlite3")
 const db = new Database("meubanco.db")
-
+const bcrypt = require("bcryptjs")
 
 app.get('/', (req, res) =>{
     res.send('Meu servidor está rodando')
@@ -14,10 +14,6 @@ app.get('/usuarios/:nome', (req, res) =>{
     res.send(`Vc buscou pelo usuário: ${nome}`)
 })
 
-app.post('/login', (req, res) =>{
-    const { email, senha } = req.body
-    res.send(`Recebi o login de: ${email}`)
-})
 
 app.get('/eventos', (req, res)=>{
     const buscarTodos = db.prepare("SELECT * FROM eventos")
@@ -52,6 +48,33 @@ app.delete('/eventos/:id', (req, res) =>{
     const buscarTodos =  db.prepare("SELECT * FROM eventos")
     res.json(buscarTodos.all())
     
+})
+
+app.post('/cadastro', async (req, res)=>{
+    const {email, senha} = req.body
+    const hash = await bcrypt.hash(senha, 10)
+    const inserir = db.prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)")
+    inserir.run(email, hash)
+    res.send('Usuario cadastrado com sucesso!')
+})
+
+app.post("/login", async (req, res) =>{
+    const {email, senha} = req.body
+
+    const buscarUsuario = db.prepare('SELECT * FROM usuarios WHERE email = ?')
+    const usuario = buscarUsuario.get(email)
+
+    if(!usuario) {
+        return res.status(401).send("usuario não encontrado")
+    }
+
+    const senhaCorreta = await bcrypt.compare(senha, usuario.senha)
+
+    if(!senhaCorreta){
+        return res.status(401).send("senha incorreta")
+    }
+
+    res.send("Login realizado com sucesso!")
 })
 
 app.listen(3000, () =>{
