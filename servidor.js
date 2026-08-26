@@ -5,6 +5,7 @@ const Database = require("better-sqlite3")
 const db = new Database("meubanco.db")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+require('dotenv').config()
 
 app.get('/', (req, res) =>{
     res.send('Meu servidor está rodando')
@@ -77,7 +78,7 @@ app.post("/login", async (req, res) =>{
 
     const token = jwt.sign(
         {id: usuario.id, email: usuario.email},
-        "minha_chave_secreta",
+        process.env.JWT_SECRET,
         {expiresIn: '1h'}
     )
 
@@ -96,7 +97,7 @@ function verificarToken(req, res, next){
         return res.status(401).send("Token não fornecido")
     }
 
-    jwt.verify(token, "minha_chave_secreta", (err, usuario) =>{
+    jwt.verify(token, process.env.JWT_SECRET, (err, usuario) =>{
         if(err){
             return res.status(403).send("token inválido")
         }

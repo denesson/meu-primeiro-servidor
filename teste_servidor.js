@@ -14,9 +14,23 @@ app.get("/usuario/:nome", (req, res) =>{
     res.send(`O nome que aparece é ${nome}`)
 })
 
-app.get("/login", (req, res) =>{
-    const {email, senha} = req.body
-    res.send(`Email que veio do baody ${email}`)
+app.post("/login", async (req, res) =>{
+    const { email, senha } = req.body
+
+    const buscarUsuario = db.prepare("SELCT * FROM usuario WHERE email = ?")
+    const usuario = buscarUsuario.get(email)
+
+    if(!usuario){
+        return res.status(401).send("Usuario invalido!")
+    }
+
+    const senhaCorreta = await bcrypt.compare(senha, usuario.senha)
+
+    if(!senhaCorreta){
+        return res.status(401).send("Senha incorreta!")
+    }
+    
+    res.send("Login realizado com sucesso.")
 })
 
 app.get("/evento", (req, res) =>{
