@@ -6,25 +6,64 @@ const db = new Database("meubanco.db")
 const bcrypt = require("bcryptjs")
 
 app.get("/", (req, res) =>{
-    res.send("Meu servidor está rodando")
+    res.send("Servidor rodando...")
 })
 
 app.get("/usuario/:nome", (req, res) =>{
     const nome = req.params.nome
-    res.send(`Você buscou pelo ${nome}`)
+    res.send(`O nome que aparece é ${nome}`)
 })
 
-app.post("/login", (req, res)=>{
+app.get("/login", (req, res) =>{
     const {email, senha} = req.body
-    res.send(`Recebi o login ${email}`)
+    res.send(`Email que veio do baody ${email}`)
 })
 
-app.get("/eventos", (req, res)=>{
+app.get("/evento", (req, res) =>{
     const buscarTodos = db.prepare("SELECT * FROM eventos")
     const eventos = buscarTodos.all()
     res.json(eventos)
 })
 
+app.post("/eventos", (req, res) =>{
+    const {nome} = req.body
+    const inserir = db.prepare("INSERT INTO eventos (id, nome) VALUES (?, ?)")
+    inserir.run(nome)
+
+    const buscarTodos = db.prepare("SELECT * FROM eventos")
+    res.send(buscarTodos.all())
+
+})
+
+app.put("/evento/:id", (req, res) =>{
+    const id = Number(req.params.id)
+    const nome = req.boy
+    const atualizar = db.prepare("UPDADE eventos SET nome = ? WHERE id = ?")
+    atualizar.all(id, nome)
+
+    const buscarTodos = db.prepare("SELECT * FROM eventos")
+    res.send(buscarTodos.all())
+})
+
+app.delete("/evento/:id", (req, res) =>{
+    const id = Number(req.params.id)
+    const apagar = db.prepare("DELETE FROM evento WHERE id = ?")
+    apagar.run(id)
+
+    const buscarTodos = db.prepare("SELECT * FROM eventos")
+    res.send(buscarTodos.all())
+})
+
+app.post("/cadastro", async (req, res) =>{
+    const {email, senha } = req.body
+    const hash = await bcrypt.hash(senha, 10)
+    const inserir = db.prepare("INSERT INTO evento (email, senha) VALUES (?, ?)")
+    inserir.run(email, senha)
+
+    const buscarTodos = db.prepare("SELECT * FROM eventos")
+    res.send(buscarTodos.all())
+})
+
 app.listen(3000, () =>{
-    console.log("Servidor ligado na porta 3000")
+    console.log("servidor rodando na porta 3000!")
 })

@@ -4,6 +4,7 @@ app.use(express.json())
 const Database = require("better-sqlite3")
 const db = new Database("meubanco.db")
 const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
 
 app.get('/', (req, res) =>{
     res.send('Meu servidor está rodando')
@@ -74,8 +75,35 @@ app.post("/login", async (req, res) =>{
         return res.status(401).send("senha incorreta")
     }
 
-    res.send("Login realizado com sucesso!")
+    const token = jwt.sign(
+        {id: usuario.id, email: usuario.email},
+        "minha_chave_secreta",
+        {expiresIn: '1h'}
+    )
+
+    res.json({mensagem: "Login realizado com sucesso!", token: token})
 })
+
+app.get('/perfil', verificarToken, (req, res) =>{
+    res.json({mensagem: `Você está logado com ${req.usuario.email}` })
+})
+
+function verificarToken(req, res, next){
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if(!token) {
+        return res.status(401).send("Token não fornecido")
+    }
+
+    jwt.verify(token, "minha_chave_secreta", (err, usuario) =>{
+        if(err){
+            return res.status(403).send("token inválido")
+        }
+        req.usuario = usuario
+        next()
+    })
+}
 
 app.listen(3000, () =>{
     console.log("servidor ligado na porta 3000")
