@@ -5,6 +5,8 @@ const Database = require("better-sqlite3")
 const db = new Database("meubanco.db")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 require('dotenv').config()
 
 app.get('/', (req, res) =>{
@@ -17,54 +19,48 @@ app.get('/usuarios/:nome', (req, res) =>{
 })
 
 
-app.get('/eventos', (req, res)=>{
-    const buscarTodos = db.prepare("SELECT * FROM eventos")
-    const eventos = buscarTodos.all()
+app.get('/eventos', async (req, res)=>{
+    const eventos = await prisma.evento.findMany()
     res.json(eventos)
 })
 
-app.post('/eventos', (req, res) =>{
+app.post('/eventos', async (req, res) =>{
     const { nome } = req.body
-    const inserir = db.prepare("INSERT INTO eventos (nome) VALUES (?)")
-    inserir.run(nome)
-
-    const buscarTodos = db.prepare("SELECT * FROM eventos")
-    res.json(buscarTodos.all())
+    const inserir = await prisma.evento.create({data: {nome: nome}})
+    
+    const eventos = await prisma.evento.findMany()
+    res.json(eventos)
 })
 
-app.put('/eventos/:id', (req, res) =>{
+app.put('/eventos/:id', async (req, res) =>{
     const id = Number(req.params.id)
     const { nome } = req.body
-    const atualizar = db.prepare("UPDATE eventos SET nome = ? WHERE id = ?")
-    atualizar.run(nome, id)
-
-    const buscarTodos =  db.prepare("SELECT * FROM eventos")
-    res.json(buscarTodos.all())
+    const atualizar = await prisma.evento.update({where: {id: id}, data: {nome: nome}})
+    
+    const eventos = await prisma.evento.findMany()
+    res.json(eventos)
 })
 
-app.delete('/eventos/:id', (req, res) =>{
+app.delete('/eventos/:id', async (req, res) =>{
     const id = Number(req.params.id)
-    const apagar = db.prepare("DELETE FROM eventos WHERE id = ?")
-    apagar.run(id)
+    const apagar = await prisma.evento.delete({where: {id: id}})
 
-    const buscarTodos =  db.prepare("SELECT * FROM eventos")
-    res.json(buscarTodos.all())
+    const eventos = await prisma.evento.findMany()
+    res.json(eventos)
     
 })
 
 app.post('/cadastro', async (req, res)=>{
     const {email, senha} = req.body
     const hash = await bcrypt.hash(senha, 10)
-    const inserir = db.prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)")
-    inserir.run(email, hash)
+    const inserir = await prisma.usuario.create({data: {email: email, senha: hash}})
     res.send('Usuario cadastrado com sucesso!')
 })
 
 app.post("/login", async (req, res) =>{
     const {email, senha} = req.body
 
-    const buscarUsuario = db.prepare('SELECT * FROM usuarios WHERE email = ?')
-    const usuario = buscarUsuario.get(email)
+    const Usuario = await prisma.usuario.findUnique({where: {email: email}})
 
     if(!usuario) {
         return res.status(401).send("usuario não encontrado")

@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Evento {
+  id            Int            @id @default(autoincrement())
+  nome          String
+  participantes Participante[]
+  reviews       Review[]
+
+  @@map("eventos")
+}
+
+model Participante {
+  id       Int    @id @default(autoincrement())
+  nome     String
+  eventoId Int    @map("evento_id")
+  evento   Evento @relation(fields: [eventoId], references: [id])
+
+  @@map("participantes")
+}
+
+model Review {
+  id       Int    @id @default(autoincrement())
+  nota     Int
+  eventoId Int    @map("evento_id")
+  evento   Evento @relation(fields: [eventoId], references: [id])
+
+  @@map("reviews")
+}
+
+model Usuario {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  senha String
+
+  @@map("usuarios")
+}

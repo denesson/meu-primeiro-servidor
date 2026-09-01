@@ -1,3 +1,4 @@
 node_modules
 meubanco.db
 .env
+/generated/prisma
